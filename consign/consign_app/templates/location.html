@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Location Share</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script> <!-- Add your Google Maps API key here -->
+    <script>
+        let map, marker;
+
+        function startLocationSharing() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(updateLocation, handleError, { enableHighAccuracy: true });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function updateLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Send location data to server using AJAX
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/save-location", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.send(JSON.stringify({ latitude: latitude, longitude: longitude }));
+
+            // Update UI
+            document.getElementById("location").innerText = `Lat: ${latitude}, Long: ${longitude}`;
+
+            // Update the map with the new location
+            if (!map) {
+                initMap(latitude, longitude); // Initialize the map if it hasn't been already
+            } else {
+                updateMap(latitude, longitude); // Update marker position on the map
+            }
+        }
+
+        function handleError(error) {
+            console.error("Error fetching location: ", error.message);
+        }
+
+        function initMap(latitude, longitude) {
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: {lat: latitude, lng: longitude}  // Initial map center
+            });
+            marker = new google.maps.Marker({
+                position: {lat: latitude, lng: longitude},
+                map: map
+            });
+        }
+
+        function updateMap(latitude, longitude) {
+            const newPosition = {lat: latitude, lng: longitude};
+            marker.setPosition(newPosition);  // Move marker to new position
+            map.setCenter(newPosition);       // Center map at new location
+        }
+    </script>
+</head>
+<body onload="startLocationSharing()">
+    <h1>Live Location Sharing</h1>
+    <div id="location">Fetching location...</div>
+    <div id="map" style="width: 100%; height: 400px;"></div> <!-- Map container -->
+</body>
+</html>
